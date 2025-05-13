@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Notes from "./lib/components/Notes.svelte";
-  import { deriveKeys } from "./crypto";
+  import { createMasterKey, deriveKeys, encryptPayload } from "./crypto";
 
   let authed = $state(false);
 
@@ -19,7 +19,13 @@
     }
   };
 
-  onMount(() => {
+  onMount(async () => {
+    const rootkey = await createMasterKey("brian", "password");
+    console.log(rootkey);
+
+    const encryptedPayload = encryptPayload("secret", rootkey.masterKey);
+    console.log(encryptedPayload);
+
     if (localStorage.getItem("master-key")) {
       authed = true;
     }

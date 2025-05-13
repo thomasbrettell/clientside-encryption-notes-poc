@@ -12,6 +12,8 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tsconfig/svelte": "^5.0.4",
+    "@types/libsodium-wrappers": "^0.7.14",
+    "@types/libsodium-wrappers-sumo": "^0.7.8",
     "@types/pouchdb-browser": "^6.1.5",
     "sass-embedded": "^1.88.0",
     "svelte": "^5.28.1",
@@ -20,7 +22,10 @@
     "vite": "^6.3.5"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "events": "^3.3.0",
+    "libsodium-wrappers": "^0.7.15",
+    "libsodium-wrappers-sumo": "^0.7.15",
     "pouchdb-browser": "^9.0.0"
   }
 }
