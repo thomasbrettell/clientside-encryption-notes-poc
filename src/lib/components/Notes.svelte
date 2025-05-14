@@ -1,8 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { localDB } from "../../pb";
-  import { encryptData } from "../../crypto";
+  import { encryptPayload } from "../../crypto";
   import Note from "./Note.svelte";
+
+  let { masterKey }: { masterKey: string } = $props();
 
   let notes = $state<any[]>([]);
 
@@ -19,14 +21,9 @@
   };
 
   const createNewNote = async () => {
-    const masterKey = localStorage.getItem("master-key");
-
-    if (!masterKey) return;
-
-    const encryptedData = await encryptData("initial content", masterKey);
-
+    const encryptedPayload = encryptPayload("secret", masterKey);
     await localDB.post({
-      content: `${encryptedData.iv}:${encryptedData.ciphertext}`,
+      content: encryptedPayload,
     });
 
     updateNotes();
@@ -56,7 +53,7 @@
     {/if}
   </div>
 {:else}
-  <Note doc={selectedNote} {updateNotes} />
+  <Note doc={selectedNote} {updateNotes} {masterKey} />
 {/if}
 
 <style lang="scss">

@@ -1,9 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { decryptData, encryptData } from "../../crypto";
+  import { decryptPayload, encryptPayload } from "../../crypto";
   import { localDB } from "../../pb";
 
-  let { doc, updateNotes } = $props();
+  let {
+    doc,
+    updateNotes,
+    masterKey,
+  }: { masterKey: string; doc: any; updateNotes: () => Promise<void> } =
+    $props();
 
   let error = $state<any>();
 
@@ -13,34 +18,23 @@
     const target = e.target as HTMLTextAreaElement;
 
     if (target) {
-      const masterKey = localStorage.getItem("master-key");
-
-      if (!masterKey) return;
-
-      const encryptedData = await encryptData(target.value, masterKey);
+      const encryptedPayload = encryptPayload(target.value, masterKey);
 
       const update = await localDB.put({
         ...doc,
-        content: `${encryptedData.iv}:${encryptedData.ciphertext}`,
+        content: encryptedPayload,
       });
 
       if (update.ok) {
-        await updateNotes();
+        updateNotes();
       }
     }
   };
 
   onMount(async () => {
-    const masterKey = localStorage.getItem("master-key");
-
-    if (!masterKey) return;
-
     try {
-      const decryptedContent_ = await decryptData(doc.content, masterKey);
-
-      if (decryptedContent_) {
-        decryptedContent = decryptedContent_;
-      }
+      const decryptedPayload = decryptPayload(doc.content, masterKey);
+      decryptedContent = decryptedPayload;
     } catch (e) {
       error = e;
       console.error(e);

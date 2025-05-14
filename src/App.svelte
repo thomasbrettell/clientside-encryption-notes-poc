@@ -1,45 +1,57 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import Notes from "./lib/components/Notes.svelte";
-  import { createMasterKey, deriveKeys, encryptPayload } from "./crypto";
+  import { computerRootKey, createRootKey } from "./crypto";
 
-  let authed = $state(false);
+  let masterKey = $state<string>();
 
+  let isLogin = $state(true);
+
+  let identifierRef = $state<HTMLInputElement>();
   let passwordRef = $state<HTMLInputElement>();
 
-  const submitHandler = async (e: SubmitEvent) => {
-    e.preventDefault();
+  const submitHandler = async () => {
+    if (passwordRef?.value && identifierRef?.value) {
+      if (isLogin) {
+        const nonce = localStorage.getItem("nonce");
 
-    if (passwordRef?.value) {
-      const rootKey = await deriveKeys(passwordRef.value, "random-salt");
+        if (nonce) {
+          const rootkey = await computerRootKey(
+            identifierRef.value,
+            passwordRef.value,
+            nonce
+          );
 
-      localStorage.setItem("master-key", rootKey.masterKey);
+          masterKey = rootkey.masterKey;
+        } else {
+          console.warn("no nonce");
+        }
+      } else {
+        const rootkey = await createRootKey(
+          identifierRef.value,
+          passwordRef.value
+        );
 
-      authed = true;
+        masterKey = rootkey.masterKey;
+
+        localStorage.setItem("nonce", rootkey.nonce);
+      }
     }
   };
-
-  onMount(async () => {
-    const rootkey = await createMasterKey("brian", "password");
-    console.log(rootkey);
-
-    const encryptedPayload = encryptPayload("secret", rootkey.masterKey);
-    console.log(encryptedPayload);
-
-    if (localStorage.getItem("master-key")) {
-      authed = true;
-    }
-  });
 </script>
 
 <div class="app">
-  {#if !authed}
-    <form onsubmit={submitHandler}>
+  {#if !masterKey}
+    <div>
+      <button onclick={() => (isLogin = !isLogin)}>
+        {isLogin ? "login" : "signup"}
+      </button>
+
+      <input placeholder="identifier" bind:this={identifierRef} />
       <input placeholder="password" type="password" bind:this={passwordRef} />
-      <button>submit</button>
-    </form>
+      <button onclick={submitHandler}>submit</button>
+    </div>
   {:else}
-    <Notes />
+    <Notes {masterKey} />
   {/if}
 </div>
 
